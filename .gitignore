@@ -1,0 +1,5 @@
+# Add or update your .gitignore file
+venv/
+__pycache__/
+saved_models/
+.env/

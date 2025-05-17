@@ -6,9 +6,16 @@ import numpy as np
 import tempfile
 from transformers import BertTokenizer
 from model import MultimodalFusion
+from pymongo import MongoClient
+import datetime
 
 # UI Setup
 st.set_page_config(page_title="Anxiety Chatbot", layout="centered")
+
+# MongoDB connection
+client = MongoClient("mongodb+srv://sandunikavi09:SLWhTunJGitcSxGO@cluster0.y6ppduj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client["anxiety_db"]
+collection = db["current_anxiety_level"]
 
 # Load tokenizer and model
 @st.cache_resource
@@ -72,13 +79,20 @@ def get_response(text, audio_file):
     ]
     return anxiety_levels[predicted_label], msg_map[predicted_label]
 
+# Save to MongoDB
+def save_to_mongo(query, anxiety_level):
+    data = {
+        "query": query,
+        "anxiety_level": anxiety_level,
+        "timestamp": datetime.datetime.now()
+    }
+    collection.insert_one(data)
 
 st.title("🧠 Anxiety Detection Chatbot")
 st.markdown("<br><br>", unsafe_allow_html=True)
 
 st.markdown("Enter a text or record your voice below:")
 st.markdown("<br>", unsafe_allow_html=True)
-
 
 chat_history = st.session_state.get("chat_history", [])
 
@@ -119,6 +133,10 @@ if submitted or (transcript and record):
         st.warning("Please enter a message or record your voice.")
     else:
         anxiety_level, message = get_response(query, audio_file)
+
+        # Save the detected anxiety level and message to MongoDB
+        save_to_mongo(query, anxiety_level)
+        
         st.markdown(f"**🧑‍🎓 You:** {query}")
         st.markdown(f"**🤖 Bot:** {message}")
 

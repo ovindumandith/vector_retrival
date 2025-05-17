@@ -3,3 +3,5 @@ venv/
 __pycache__/
 saved_models/
 .env/
+
+/best_multimodal_model.pth
